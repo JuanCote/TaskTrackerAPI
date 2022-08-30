@@ -37,7 +37,7 @@ class ResponseCard(BaseModel):
         'description': 'Gives back all cards',
         'content': {
             'application/json': {
-                'example': {'cards': 'list of cards'}
+                'example': {'list of cards'}
             }
         }
     }
@@ -45,7 +45,7 @@ class ResponseCard(BaseModel):
 async def get_cards():
     cursor = cards.find({'is_deleted': False})
 
-    result = {'cards': []}
+    result = []
 
     for card in cursor:
         card['id'] = str(card['_id'])  # converting id from ObjectId to string
@@ -63,7 +63,7 @@ async def get_cards():
         cards.update_one({'_id': card['_id']}, {'$set': {'viewed': current_time}})
 
         del card['is_deleted'], card['_id'], card['viewed']
-        result['cards'].append(card)
+        result.append(card)
 
     return result
 

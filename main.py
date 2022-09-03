@@ -1,3 +1,4 @@
+import pymongo
 import pytz
 from fastapi import FastAPI
 from pydantic import BaseModel
@@ -43,7 +44,7 @@ class ResponseCard(BaseModel):
     }
 })
 async def get_cards():
-    cursor = cards.find({'is_deleted': False})
+    cursor = cards.find({'is_deleted': False}).sort("date", pymongo.DESCENDING)
 
     result = []
 

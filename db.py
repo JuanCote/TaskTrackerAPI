@@ -5,3 +5,4 @@ client = MongoClient(MONGODB_URI)
 db = client.Sanyok
 
 cards = db.cards
+stats = db.stats

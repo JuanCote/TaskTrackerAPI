@@ -3,11 +3,11 @@ import pytz
 from fastapi import FastAPI
 from pydantic import BaseModel
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timedelta
 from bson.objectid import ObjectId
 from starlette.responses import JSONResponse
 
-from db import cards
+from db import cards, stats
 
 
 app = FastAPI()
@@ -24,6 +24,7 @@ class Card(BaseModel):
 class UpdateCard(BaseModel):
     title: Optional[str]
     counter: Optional[int]
+    date: datetime
 
 
 class ResponseCard(BaseModel):
@@ -54,10 +55,16 @@ async def get_cards():
         current_time = datetime.now(timezone).replace(tzinfo=None)
 
         difference = int((current_time - card['viewed']).total_seconds() // 3600)
-        if difference > 24:
-            card['counter'] = 0
-            cards.update_one({'_id': card['_id']}, {'$set': {'counter': 0}})
-        elif current_time.day != card['viewed'].day:
+        if difference > 24 or current_time.day != card['viewed'].day:
+            stats.update_one({'card': str(card['_id'])}, {'$set': {str(card['viewed'].strftime('%Y-%m-%d')): card['counter']}})
+            delta = current_time - card['viewed']
+            if delta.days > 1:
+                data_update = dict()
+                for i in range(1, delta.days):
+                    day = datetime.strftime(card['viewed'] + timedelta(days=i), '%Y-%m-%d')
+                    data_update.update({day: 0})
+                stats.update_one({'card': str(card['_id'])}, {'$set': data_update})
+
             card['counter'] = 0
             cards.update_one({'_id': card['_id']}, {'$set': {'counter': 0}})
 
@@ -78,6 +85,11 @@ async def add_card(card: Card):
 
     card['id'] = str(card['_id'])  # converting id from ObjectId to string
     del card['is_deleted'], card['_id'], card['viewed']
+
+    stat = {
+        'card': card['id']
+    }
+    stats.insert_one(stat)
 
     return card
 

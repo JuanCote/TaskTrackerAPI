@@ -148,3 +148,29 @@ async def update_card(card_id: str, card: UpdateCard):
     del new_card['_id'], new_card['is_deleted'], new_card['viewed']
 
     return new_card
+
+
+@app.get('/api/get_stat/{card_id}', responses={
+    404: {
+        "description": "The card was not found",
+        "content": {
+            "application/json": {
+                "example": {'message': 'non-existent card'}
+            }
+        }
+    }
+})
+async def get_stat(card_id: str):
+    stat = stats.find_one({'card': card_id})
+    if stat is None:
+        return JSONResponse(status_code=404, content={'message': 'non-existent card'})
+
+    del stat['_id'], stat['card']
+
+    result = []
+    for key, value in stat.items():
+        result.append({'date': key, 'counter': value})
+
+    print(result)
+
+    return result

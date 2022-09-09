@@ -10,7 +10,7 @@ from starlette.responses import JSONResponse
 from db import cards, stats
 
 
-app = FastAPI()
+app = FastAPI(docs_url="/")
 
 timezone = pytz.timezone('Europe/Moscow')
 
@@ -156,6 +156,14 @@ async def update_card(card_id: str, card: UpdateCard):
         "content": {
             "application/json": {
                 "example": {'message': 'non-existent card'}
+            }
+        }
+    },
+    200: {
+        'description': 'Gives back all cards',
+        'content': {
+            'application/json': {
+                'example': {'list of stat'}
             }
         }
     }

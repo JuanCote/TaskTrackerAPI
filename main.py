@@ -2,7 +2,8 @@ import pymongo
 import pytz
 import os
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException, Depends
+from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel, Field
 from typing import Optional, Union
 from datetime import datetime, timedelta
@@ -12,6 +13,8 @@ from passlib.context import CryptContext
 from jose import JWTError, jwt, ExpiredSignatureError
 
 from db import cards, stats, users
+from utils import verify_password, get_hashed_password, create_access_token
+from deps import get_current_user
 
 
 app = FastAPI(docs_url="/")
@@ -48,29 +51,7 @@ class AuthUser(BaseModel):
     password: str = Field(max_length=30, min_length=6)
 
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-
-def get_password_hash(password):
-    return pwd_context.hash(password)
-
-
-def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
-
-
-def create_access_token(data: dict, expires_delta: Union[timedelta, None] = None):
-    to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-    else:
-        expire = datetime.utcnow() + timedelta(minutes=15)
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
-
-
-@app.get('/api/get_cards/{username}', tags=['cards'], responses={
+@app.get('/api/get_cards', tags=['cards'], responses={
     200: {
         'description': 'Gives back all cards',
         'content': {
@@ -88,21 +69,10 @@ def create_access_token(data: dict, expires_delta: Union[timedelta, None] = None
         }
     }
 })
-async def get_cards(access_token: str):
-    try:
-        payload = jwt.decode(access_token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("username")
-        if username is None:
-            return JSONResponse(status_code=401, content={'message': 'invalid token'})
-
-    except ExpiredSignatureError:
-        return JSONResponse(status_code=403, content="token has been expired")
-    except JWTError:
-        return JSONResponse(status_code=401, content={'message': 'invalid token'})
-
-    if users.find_one({'username': username}) is None:
+async def get_cards(user: str = Depends(get_current_user)):
+    if users.find_one({'username': user}) is None:
         return JSONResponse(status_code=404, content={'message': 'user not found'})
-    cursor = cards.find({'is_deleted': False, 'user': username}).sort("date", pymongo.DESCENDING)
+    cursor = cards.find({'is_deleted': False, 'user': user}).sort("date", pymongo.DESCENDING)
 
     result = []
 
@@ -133,25 +103,14 @@ async def get_cards(access_token: str):
     return result
 
 
-@app.post('/api/add_card/{access_token}', tags=['cards'], response_model=ResponseCard)
-async def add_card(card: Card, access_token: str):
-    try:
-        payload = jwt.decode(access_token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("username")
-        if username is None:
-            return JSONResponse(status_code=401, content={'message': 'invalid token'})
-
-    except ExpiredSignatureError:
-        return JSONResponse(status_code=403, content="token has been expired")
-    except JWTError:
-        return JSONResponse(status_code=401, content={'message': 'invalid token'})
-
-    if users.find_one({'username': username}) is None:
+@app.post('/api/add_card', tags=['cards'], response_model=ResponseCard)
+async def add_card(card: Card, user: str = Depends(get_current_user)):
+    if users.find_one({'username': user}) is None:
         return JSONResponse(status_code=404, content={'message': 'user not found'})
 
     card = card.dict()
     card['is_deleted'] = False
-    card['user'] = username
+    card['user'] = user
     card['viewed'] = datetime.now(timezone)
     cards.insert_one(card)
 
@@ -167,7 +126,7 @@ async def add_card(card: Card, access_token: str):
 
 
 @app.delete(
-    '/api/delete_card/{card_id}/{access_token}', tags=['cards'],
+    '/api/delete_card/{card_id}', tags=['cards'],
     responses={
         404: {
             "description": "The card was not found",
@@ -187,30 +146,19 @@ async def add_card(card: Card, access_token: str):
         },
     },
 )
-async def delete_card(card_id: str, access_token: str):
-    try:
-        payload = jwt.decode(access_token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("username")
-        if username is None:
-            return JSONResponse(status_code=401, content={'message': 'invalid token'})
-
-    except ExpiredSignatureError:
-        return JSONResponse(status_code=403, content="token has been expired")
-    except JWTError:
-        return JSONResponse(status_code=401, content={'message': 'invalid token'})
-
-    if users.find_one({'username': username}) is None:
+async def delete_card(card_id: str, user: str = Depends(get_current_user)):
+    if users.find_one({'username': user}) is None:
         return JSONResponse(status_code=404, content={'message': 'user not found'})
 
     try:
-        cards.update_one({'_id': ObjectId(card_id)}, {'$set': {'is_deleted': True}})
+        cards.update_one({'_id': ObjectId(card_id), 'user': user}, {'$set': {'is_deleted': True}})
     except:
         return JSONResponse(status_code=404, content={'message': 'non-existent card'})
 
     return {"message": "deleted"}
 
 
-@app.put('/api/update_card/{card_id}/{access_token}', tags=['cards'], response_model=ResponseCard, responses={
+@app.put('/api/update_card/{card_id}', tags=['cards'], response_model=ResponseCard, responses={
     404: {
         "description": "The card was not found",
         "content": {
@@ -220,25 +168,14 @@ async def delete_card(card_id: str, access_token: str):
         }
     }
 })
-async def update_card(card_id: str, access_token: str, card: UpdateCard):
-    try:
-        payload = jwt.decode(access_token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("username")
-        if username is None:
-            return JSONResponse(status_code=401, content={'message': 'invalid token'})
-
-    except ExpiredSignatureError:
-        return JSONResponse(status_code=403, content="token has been expired")
-    except JWTError:
-        return JSONResponse(status_code=401, content={'message': 'invalid token'})
-
-    if users.find_one({'username': username}) is None:
+async def update_card(card_id: str, card: UpdateCard, user: str = Depends(get_current_user)):
+    if users.find_one({'username': user}) is None:
         return JSONResponse(status_code=404, content={'message': 'user not found'})
 
     card = card.dict(exclude_unset=True)  # getting a dictionary with only the entered fields
 
     try:
-        cards.update_one({'_id': ObjectId(card_id)}, {'$set': card})
+        cards.update_one({'_id': ObjectId(card_id), 'user': user}, {'$set': card})
     except:
         return JSONResponse(status_code=404, content={'message': 'non-existent card'})
 
@@ -268,7 +205,7 @@ async def update_card(card_id: str, access_token: str, card: UpdateCard):
         }
     }
 })
-async def get_stat(card_id: str):
+async def get_stat(card_id: str, user: str = Depends(get_current_user)):
     stat = stats.find_one({'card': card_id})
     if stat is None:
         return JSONResponse(status_code=404, content={'message': 'non-existent card'})
@@ -307,7 +244,7 @@ async def registration(user: AuthUser):
         return JSONResponse(status_code=409, content={'message': 'nickname is taken'})
 
     user = user.dict()
-    user['password'] = get_password_hash(user['password'])
+    user['password'] = get_hashed_password(user['password'])
     users.insert_one(user)
 
     return JSONResponse(status_code=200, content={'message': 'registration completed successfully'})
@@ -326,7 +263,7 @@ async def registration(user: AuthUser):
         'description': 'Login completed successfully',
         'content': {
             'application/json': {
-                'example': {'access_token': 'string of token', 'username': 'string'}
+                'example': {'access_token': 'string of token'}
             }
         }
     },
@@ -339,7 +276,7 @@ async def registration(user: AuthUser):
         }
     }
 })
-async def login(user: AuthUser):
+async def login(user: OAuth2PasswordRequestForm = Depends()):
     data_user = users.find_one({'username': user.username})
     if data_user is None:
         return JSONResponse(status_code=404, content={'message': 'user not found'})
@@ -347,18 +284,14 @@ async def login(user: AuthUser):
     if not verify_password(user.password, data_user['password']):
         return JSONResponse(status_code=401, content={'message': 'wrong password'})
 
-    access_token_expires = timedelta(days=ACCESS_TOKEN_EXPIRE_DAYS)
-    access_token = create_access_token(data={'username': user.username}, expires_delta=access_token_expires)
-
     return JSONResponse(status_code=200, content={
-        'access_token': access_token,
-        'username': user.username
+        "access_token": create_access_token(user.username)
     })
 
 
-@app.get('/api/get_current_user/{access_token}', tags=['auth'], responses={
+@app.get('/api/get_current_user', tags=['auth'], responses={
     200: {
-        'description': 'Login completed successfully',
+        'description': 'Success login',
         'content': {
             'application/json': {
                 'example': {'username': 'string'}
@@ -366,31 +299,13 @@ async def login(user: AuthUser):
         }
     },
     401: {
-        'description': 'Wrong password',
+        'description': 'Not authenticated',
         'content': {
             'application/json': {
-                'example': {'message': 'invalid token'}
+                'example': {"detail": "Not authenticated"}
             }
         }
     },
-    403: {
-        'description': 'Token expired',
-        'content': {
-            'application/json': {
-                'example': {'message': 'token has been expired'}
-            }
-        }
-    }
 })
-async def get_current_user(token: str):
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("username")
-        if username is None:
-            return JSONResponse(status_code=401, content={'message': 'invalid token'})
-
-        return JSONResponse(status_code=200, content={'username': username})
-    except ExpiredSignatureError:
-        return JSONResponse(status_code=403, content="token has been expired")
-    except JWTError:
-        return JSONResponse(status_code=401, content={'message': 'invalid token'})
+async def me(user: str = Depends(get_current_user)):
+    return {'username': user}

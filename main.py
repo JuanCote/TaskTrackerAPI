@@ -276,7 +276,7 @@ async def registration(user: AuthUser):
         }
     }
 })
-async def login(user: OAuth2PasswordRequestForm = Depends()):
+async def login(user: AuthUser):
     data_user = users.find_one({'username': user.username})
     if data_user is None:
         return JSONResponse(status_code=404, content={'message': 'user not found'})

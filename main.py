@@ -336,9 +336,9 @@ async def ws_test():
     return HTMLResponse(html)
 
 
-@app.websocket("/api/ws")
-async def websocket_endpoint(websocket: WebSocket):
+@app.websocket("/api/ws/{client_id}")
+async def websocket_endpoint(websocket: WebSocket, client_id: str):
     await websocket.accept()
     while True:
         data = await websocket.receive_text()
-        await websocket.send_text(f"Message text was: {data}")
+        await websocket.send_text(f"Message text was: {data, client_id}")

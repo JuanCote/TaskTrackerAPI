@@ -336,7 +336,7 @@ async def ws_test():
     return HTMLResponse(html)
 
 
-@app.websocket("/ws")
+@app.websocket("/api/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     while True:

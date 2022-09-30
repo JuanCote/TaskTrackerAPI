@@ -17,6 +17,7 @@ html = """
             var client_id = Date.now()
             document.querySelector("#ws-id").textContent = client_id;
             var ws = new WebSocket(`wss://mobile-app-for-sanyok.herokuapp.com/api/ws/${client_id}`);
+
             ws.onmessage = function(event) {
                 var messages = document.getElementById('messages')
                 var message = document.createElement('li')
@@ -34,3 +35,6 @@ html = """
     </body>
 </html>
 """
+
+# var ws = new WebSocket(`wss://mobile-app-for-sanyok.herokuapp.com/api/ws/${client_id}`);
+# var ws = new WebSocket(`ws://localhost:8000/api/ws/${client_id}`);

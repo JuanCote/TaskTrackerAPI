@@ -2,19 +2,17 @@ import pymongo
 import pytz
 import os
 
-from fastapi import FastAPI, Request, HTTPException, Depends
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi import FastAPI, Request, HTTPException, Depends, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel, Field
-from typing import Optional, Union
+from typing import Optional, Union, List
 from datetime import datetime, timedelta
 from bson.objectid import ObjectId
-from starlette.responses import JSONResponse
-from passlib.context import CryptContext
-from jose import JWTError, jwt, ExpiredSignatureError
+from starlette.responses import JSONResponse, HTMLResponse
 
 from db import cards, stats, users
 from utils import verify_password, get_hashed_password, create_access_token
 from deps import get_current_user
+from test_file import html
 
 
 app = FastAPI(docs_url="/")
@@ -49,6 +47,28 @@ class ResponseCard(BaseModel):
 class AuthUser(BaseModel):
     username: str = Field(max_length=20, min_length=6)
     password: str = Field(max_length=30, min_length=6)
+
+
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: List[WebSocket] = []
+
+    async def connect(self, websocket: WebSocket):
+        await websocket.accept()
+        self.active_connections.append(websocket)
+
+    def disconnect(self, websocket: WebSocket):
+        self.active_connections.remove(websocket)
+
+    async def send_personal_message(self, message: str, websocket: WebSocket):
+        await websocket.send_text(message)
+
+    async def broadcast(self, message: str):
+        for connection in self.active_connections:
+            await connection.send_text(message)
+
+
+manager = ConnectionManager()
 
 
 @app.get('/api/get_cards', tags=['cards'], responses={
@@ -309,3 +329,21 @@ async def login(user: AuthUser):
 })
 async def me(user: str = Depends(get_current_user)):
     return {'username': user}
+
+
+@app.get('/api/ws_test')
+async def ws_test():
+    return HTMLResponse(html)
+
+
+@app.websocket("/ws/{client_id}")
+async def websocket_endpoint(websocket: WebSocket, client_id: int):
+    await manager.connect(websocket)
+    try:
+        while True:
+            data = await websocket.receive_text()
+            await manager.send_personal_message(f"You wrote: {data}", websocket)
+            await manager.broadcast(f"Client #{client_id} says: {data}")
+    except WebSocketDisconnect:
+        manager.disconnect(websocket)
+        await manager.broadcast(f"Client #{client_id} left the chat")

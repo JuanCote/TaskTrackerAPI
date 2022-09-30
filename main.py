@@ -336,8 +336,9 @@ async def ws_test():
     return HTMLResponse(html)
 
 
-@app.websocket("api/ws/{client_id}")
-async def websocket_endpoint(websocket: WebSocket, client_id: int):
+@app.websocket("api/ws/")
+async def websocket_endpoint(websocket: WebSocket):
+    client_id = 123
     await manager.connect(websocket)
     try:
         while True:

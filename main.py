@@ -25,8 +25,6 @@ ACCESS_TOKEN_EXPIRE_DAYS = 30
 
 
 class ConnectionManager:
-    active_connections: List[WebSocket] = []
-
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
         active_connections.append(websocket)

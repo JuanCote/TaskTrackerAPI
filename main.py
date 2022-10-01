@@ -44,7 +44,7 @@ class ConnectionManager:
 
 
 manager = ConnectionManager()
-print('manager created')
+
 
 class Card(BaseModel):
     title: str
@@ -338,8 +338,8 @@ async def ws_test():
 
 @app.websocket("/api/ws/{client_id}")
 async def websocket_endpoint(websocket: WebSocket, client_id: int):
-    print(manager.active_connections)
     await manager.connect(websocket)
+    print(manager.active_connections)
     try:
         while True:
             data = await websocket.receive_text()

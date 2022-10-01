@@ -44,7 +44,7 @@ class ConnectionManager:
 
 
 manager = ConnectionManager()
-
+print('manager created')
 
 class Card(BaseModel):
     title: str

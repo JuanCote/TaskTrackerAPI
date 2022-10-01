@@ -43,7 +43,7 @@ class ConnectionManager:
             await connection.send_text(message)
 
 
-active_connections: List[WebSocket] = []
+active_connections = []
 manager = ConnectionManager()
 
 

@@ -7,3 +7,4 @@ db = client.Sanyok
 cards = db.cards
 stats = db.stats
 users = db.users
+websockets = db.websockets

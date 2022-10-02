@@ -37,10 +37,11 @@ class ConnectionManager:
         await task
 
         if task:
+            print(task)
             task.cancel()
 
     def disconnect(self, websocket: WebSocket):
-        delete_socket_to_list(websocket)
+        print(delete_socket_to_list(websocket))
 
     async def send_personal_message(self, message: str, websocket: WebSocket):
         await websocket.send_text(message)

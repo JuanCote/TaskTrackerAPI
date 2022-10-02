@@ -2,9 +2,9 @@ import pymongo
 import pytz
 import os
 
-from fastapi import FastAPI, Request, HTTPException, Depends, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, Depends, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel, Field
-from typing import Optional, Union, List
+from typing import Optional
 from datetime import datetime, timedelta
 from bson.objectid import ObjectId
 from starlette.responses import JSONResponse, HTMLResponse
@@ -13,6 +13,7 @@ from db import cards, stats, users
 from utils import verify_password, get_hashed_password, create_access_token
 from deps import get_current_user
 from test_file import html
+from socket_manager import manager
 
 
 app = FastAPI(docs_url="/")
@@ -22,27 +23,6 @@ timezone = pytz.timezone('Europe/Moscow')
 SECRET_KEY = os.environ.get('mobile_secret_code')
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_DAYS = 30
-
-
-class ConnectionManager:
-    async def connect(self, websocket: WebSocket):
-        await websocket.accept()
-        active_connections.update({websocket: '2'})
-        print(active_connections)
-
-    def disconnect(self, websocket: WebSocket):
-        active_connections.pop(websocket)
-
-    async def send_personal_message(self, message: str, websocket: WebSocket):
-        await websocket.send_text(message)
-
-    async def broadcast(self, message: str):
-        for key, connection in active_connections.items():
-            await key.send_text(message)
-
-
-active_connections = {}
-manager = ConnectionManager()
 
 
 class Card(BaseModel):

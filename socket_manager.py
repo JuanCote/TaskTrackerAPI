@@ -17,6 +17,7 @@ class ConnectionManager:
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
         active_connections.append(websocket)
+        print(globals())
         print(id(active_connections))
 
     def disconnect(self, websocket: WebSocket):

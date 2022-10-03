@@ -9,12 +9,12 @@ from datetime import datetime, timedelta
 from bson.objectid import ObjectId
 from starlette.responses import JSONResponse, HTMLResponse
 
+from socket_manager import manager
 from db import cards, stats, users
 from utils import verify_password, get_hashed_password, create_access_token
 from deps import get_current_user
 from test_file import html
-from socket_manager import manager
-
+from socket_manager import ConnectionManager
 
 app = FastAPI(docs_url="/")
 

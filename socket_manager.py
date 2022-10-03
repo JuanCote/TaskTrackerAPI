@@ -5,20 +5,18 @@ import starlette.websockets
 from db import websockets
 from fastapi import WebSocket
 
-active_connections: List[WebSocket] = []
+
+if 'active_connections' not in globals():
+    active_connections: List[WebSocket] = []
 
 
 class ConnectionManager:
     def __init__(self):
-        print('init')
-
-        print('*'*50, id(active_connections))
+        pass
 
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
         active_connections.append(websocket)
-        print(id(self))
-        print(id(active_connections))
 
     def disconnect(self, websocket: WebSocket):
         active_connections.remove(websocket)

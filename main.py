@@ -18,8 +18,6 @@ from socket_manager import manager
 
 app = FastAPI(docs_url="/")
 
-active_connections: List[WebSocket] = []
-
 timezone = pytz.timezone('Europe/Moscow')
 
 SECRET_KEY = os.environ.get('mobile_secret_code')

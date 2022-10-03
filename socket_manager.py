@@ -1,9 +1,11 @@
+from typing import List
 
 import starlette.websockets
 
 from db import websockets
-from main import active_connections
 from fastapi import WebSocket
+
+active_connections: List[WebSocket] = []
 
 
 class ConnectionManager:

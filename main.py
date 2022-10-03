@@ -18,6 +18,8 @@ from socket_manager import ConnectionManager
 
 app = FastAPI(docs_url="/")
 
+rooms = {}
+
 timezone = pytz.timezone('Europe/Moscow')
 
 SECRET_KEY = os.environ.get('mobile_secret_code')
@@ -317,6 +319,7 @@ async def ws_test():
 
 @app.websocket("/api/ws/{client_id}")
 async def websocket_endpoint(websocket: WebSocket, client_id: int):
+    print(id(rooms))
     await manager.connect(websocket)
     try:
         while True:

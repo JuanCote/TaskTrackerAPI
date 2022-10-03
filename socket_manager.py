@@ -13,7 +13,7 @@ from fastapi import WebSocket
 class ConnectionManager:
     def __init__(self):
         self.active_connections: List[WebSocket] = []
-        print(id(self.active_connections))
+        print('*'*50, id(self.active_connections))
 
     async def connect(self, websocket: WebSocket):
         await websocket.accept()

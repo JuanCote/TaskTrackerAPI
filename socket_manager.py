@@ -12,12 +12,14 @@ from fastapi import WebSocket
 
 class ConnectionManager:
     def __init__(self):
+        print('init')
         self.active_connections: List[WebSocket] = []
         print('*'*50, id(self.active_connections))
 
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
         self.active_connections.append(websocket)
+        print(id(self))
         print(id(self.active_connections))
 
     def disconnect(self, websocket: WebSocket):

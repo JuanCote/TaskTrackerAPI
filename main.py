@@ -18,7 +18,7 @@ from socket_manager import ConnectionManager
 
 app = FastAPI(docs_url="/")
 
-rooms = {}
+rooms = dict()
 
 timezone = pytz.timezone('Europe/Moscow')
 
@@ -71,6 +71,7 @@ class AuthUser(BaseModel):
     }
 })
 async def get_cards(user: str = Depends(get_current_user)):
+    print(id(rooms))
     if users.find_one({'username': user}) is None:
         return JSONResponse(status_code=404, content={'message': 'user not found'})
     cursor = cards.find({'is_deleted': False, 'user': user}).sort("date", pymongo.DESCENDING)
@@ -319,7 +320,6 @@ async def ws_test():
 
 @app.websocket("/api/ws/{client_id}")
 async def websocket_endpoint(websocket: WebSocket, client_id: int):
-    print(id(rooms))
     await manager.connect(websocket)
     try:
         while True:

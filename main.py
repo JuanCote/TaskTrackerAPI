@@ -4,7 +4,7 @@ import os
 
 from fastapi import FastAPI, Depends, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime, timedelta
 from bson.objectid import ObjectId
 from starlette.responses import JSONResponse, HTMLResponse
@@ -17,6 +17,8 @@ from socket_manager import manager
 
 
 app = FastAPI(docs_url="/")
+
+active_connections: List[WebSocket] = []
 
 timezone = pytz.timezone('Europe/Moscow')
 

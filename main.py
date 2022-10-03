@@ -2,6 +2,7 @@ import pymongo
 import pytz
 import os
 
+import uvicorn
 from fastapi import FastAPI, Depends, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel, Field
 from typing import Optional, List
@@ -329,3 +330,7 @@ async def websocket_endpoint(websocket: WebSocket, client_id: int):
     except WebSocketDisconnect:
         manager.disconnect(websocket)
         await manager.broadcast(f"Client #{client_id} left the chat")
+
+
+if __name__ == '__main__':
+    uvicorn.run(app, port=8000)

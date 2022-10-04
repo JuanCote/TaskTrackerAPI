@@ -8,16 +8,19 @@ from fastapi import WebSocket
 
 class ConnectionManager:
     def __init__(self):
-        self.active_connections: List[WebSocket] = []
+        self.active_connections = []
 
-    async def connect(self, websocket: WebSocket):
+    async def connect(self, websocket: WebSocket, user):
         await websocket.accept()
-        self.active_connections.append(websocket)
-        print(id(manager))
+        self.active_connections.append({'username': user, 'websocket': websocket})
+        print(self.active_connections)
 
-    def disconnect(self, websocket: WebSocket):
-        self.active_connections.remove(websocket)
+    def disconnect(self, user):
+        for item in self.active_connections.copy():
+            if item.get('username') == user:
+                self.active_connections.remove(item)
 
+        print(self.active_connections)
     async def send_personal_message(self, message: str, websocket: WebSocket):
         await websocket.send_text(message)
 

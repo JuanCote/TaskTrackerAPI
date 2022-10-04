@@ -19,8 +19,6 @@ from socket_manager import ConnectionManager
 
 app = FastAPI(docs_url="/")
 
-rooms = dict()
-
 timezone = pytz.timezone('Europe/Moscow')
 
 SECRET_KEY = os.environ.get('mobile_secret_code')
@@ -218,8 +216,6 @@ async def get_stat(card_id: str, user: str = Depends(get_current_user)):
     for key, value in stat.items():
         result.append({'date': key, 'counter': value})
 
-    print(result)
-
     return result
 
 
@@ -318,23 +314,26 @@ async def ws_test():
     return HTMLResponse(html)
 
 
-@app.websocket("/api/ws/{client_id}")
-async def websocket_endpoint(websocket: WebSocket, client_id: int):
-    await manager.connect(websocket)
+@app.websocket("/api/ws/{user}")
+async def websocket_endpoint(websocket: WebSocket, user: str):
+    await manager.connect(websocket, user)
     try:
         while True:
             data = await websocket.receive_text()
             # await manager.send_personal_message(f"You wrote: {data}", websocket)
-            await manager.broadcast(f"Client #{client_id} says: {data}")
+            await manager.broadcast()
     except WebSocketDisconnect:
-        manager.disconnect(websocket)
-        await manager.broadcast(f"Client #{client_id} left the chat")
+        manager.disconnect(user)
 
 
-@app.get('/test')
-async def test():
-    return {'id': id(rooms)}
+@app.get('/api/users', tags=['chat'])
+async def chat_users(user: str = Depends(get_current_user)):
+    cursor = users.find()
 
+    chat_users = []
+    for item in cursor:
+        if item['username'] != user:
+            chat_users.append({'username': item['username']})
 
-if __name__ == '__main__':
-    uvicorn.run(app, port=8000)
+    return chat_users
+

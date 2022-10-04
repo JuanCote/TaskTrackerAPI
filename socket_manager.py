@@ -26,7 +26,4 @@ class ConnectionManager:
             await connection.send_text(message)
 
 
-if 'manager' not in globals():
-    manager = ConnectionManager()
-else:
-    print('есть')
+manager = ConnectionManager()

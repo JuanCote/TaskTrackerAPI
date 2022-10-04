@@ -326,7 +326,16 @@ async def websocket_endpoint(websocket: WebSocket, user: str = Depends(get_curre
         manager.disconnect(user)
 
 
-@app.get('/api/users', tags=['chat'])
+@app.get('/api/users', tags=['chat'], responses={
+    200: {
+        'description': 'Gives back all users',
+        'content': {
+            'application/json': {
+                'example': [{'username': 'Stepan'}, {'username': 'Sanyok'}]
+            }
+        }
+    },
+})
 async def chat_users(user: str = Depends(get_current_user)):
     cursor = users.find()
 

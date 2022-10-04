@@ -332,7 +332,7 @@ async def websocket_endpoint(websocket: WebSocket, client_id: int):
 
 
 @app.get('/test')
-async def test():
+def test():
     print(id(rooms))
     return {'asd': 'asd'}
 

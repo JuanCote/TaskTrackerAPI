@@ -72,7 +72,6 @@ class AuthUser(BaseModel):
     }
 })
 async def get_cards(user: str = Depends(get_current_user)):
-    print(id(rooms))
     if users.find_one({'username': user}) is None:
         return JSONResponse(status_code=404, content={'message': 'user not found'})
     cursor = cards.find({'is_deleted': False, 'user': user}).sort("date", pymongo.DESCENDING)
@@ -330,6 +329,12 @@ async def websocket_endpoint(websocket: WebSocket, client_id: int):
     except WebSocketDisconnect:
         manager.disconnect(websocket)
         await manager.broadcast(f"Client #{client_id} left the chat")
+
+
+@app.get('/test')
+async def test():
+    print(id(rooms))
+    return {'asd': 'asd'}
 
 
 if __name__ == '__main__':

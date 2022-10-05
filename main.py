@@ -13,8 +13,8 @@ from bson.objectid import ObjectId
 from starlette.responses import JSONResponse, HTMLResponse
 
 from socket_manager import manager
-from db import cards, stats, users, chat_rooms
-from utils import verify_password, get_hashed_password, create_access_token
+from db import cards, stats, users, chat_rooms, create_chat
+from utils import verify_password, get_hashed_password, create_access_token, get_messages_from_chat
 from deps import get_current_user
 from test_file import html
 from socket_manager import ConnectionManager
@@ -317,8 +317,7 @@ async def ws_test():
 
 
 @app.websocket("/api/ws")
-async def websocket_endpoint(websocket: WebSocket): # , user: str = Depends(get_current_user) !!!!!!!!!!!!!!!!
-    user = 'Nikita'
+async def websocket_endpoint(websocket: WebSocket, user: str = Depends(get_current_user)):
     await manager.connect(websocket, user)
     try:
         while True:
@@ -328,12 +327,11 @@ async def websocket_endpoint(websocket: WebSocket): # , user: str = Depends(get_
             sender = converted_data['sender']
             message = converted_data['message']
             await manager.send_personal_message(receiver, sender, message)
-            await manager.broadcast(f"Client Nikita says: {data}")
     except WebSocketDisconnect:
         manager.disconnect(user)
 
 
-@app.get('/api/users', tags=['chat'], responses={
+@app.get('/api/chat_users', tags=['chat'], responses={
     200: {
         'description': 'Gives back all users',
         'content': {
@@ -354,20 +352,34 @@ async def chat_users(user: str = Depends(get_current_user)):
     return chat_users
 
 
-@app.get('/test')
-async def test():
-    cursor = chat_rooms.find_one({'members': ['killer', 'Nikita']})
+@app.get('/api/get_chat/{user2}', tags=['chat'], responses={
+    200: {
+        'description': 'Gives all messages of selected chat',
+        'content': {
+            'application/json': {
+                'example': [{
+                            "from": "killer",
+                            "to": "Nikita",
+                            "message": "+"
+                        }, {
+                            "from": "killer",
+                            "to": "Nikita",
+                            "message": "+"
+                        }]
+            }
+        }
+    },
+})
+async def get_chat(user2: str, user: str = Depends(get_current_user)):
+    cursor = chat_rooms.find_one({'members': [user, user2]})
     if cursor is None:
-        cursor = chat_rooms.find_one({'members': ['Nikita', 'killer']})
-    for item in cursor['messages']:
-        print(item)
+        cursor = chat_rooms.find_one({'members': [user2, user]})
+        if cursor is None:
+            create_chat(user, user2)
+            return JSONResponse(status_code=200, content={})
+        else:
+            data = get_messages_from_chat(cursor)
+    else:
+        data = get_messages_from_chat(cursor)
 
-
-@app.get('/test1')
-async def test():
-    chat_rooms.update_one({'members': ['Nasdasd', 'killer']}, {'$push': {'messages': {
-        'from': 'Nikita',
-        'to': 'killer',
-        'message': 'asdasdasd+asdasdaasdads',
-        'time': int(datetime.now().timestamp()*1000)
-    }}})
+    return JSONResponse(status_code=200, content=data)

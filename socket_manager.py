@@ -5,6 +5,7 @@ from fastapi import WebSocket
 
 from db import insert_message
 
+
 class ConnectionManager:
     def __init__(self):
         self.active_connections = []

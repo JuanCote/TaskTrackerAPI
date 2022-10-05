@@ -25,3 +25,11 @@ def insert_message(receiver: str, sender: str, message: str):
         cursor = chat_rooms.find_one({'members': [sender, receiver]})
         if cursor is not None:
             chat_rooms.update_one({'members': [sender, receiver]}, dict_to_push)
+
+
+def create_chat(user, user2):
+    chat_rooms.insert_one({
+        'members': [user, user2],
+        'messages': []
+    })
+

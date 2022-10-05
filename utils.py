@@ -29,3 +29,9 @@ def create_access_token(subject: Union[str, Any], expires_delta: int = None) -> 
     encoded_jwt = jwt.encode(to_encode, JWT_SECRET_KEY, ALGORITHM)
     return encoded_jwt
 
+
+def get_messages_from_chat(cursor):
+    data = []
+    for item in cursor['messages']:
+        data.append(item)
+    return data

@@ -16,7 +16,7 @@ html = """
         <script>
             var client_id = Date.now()
             document.querySelector("#ws-id").textContent = client_id;
-            var ws = new WebSocket(`ws://localhost:8000/api/ws`);
+            var ws = new WebSocket(`wss://mobile-app-for-sanyok.herokuapp.com/api/ws`);
 
             ws.onmessage = function(event) {
                 var messages = document.getElementById('messages')
@@ -27,7 +27,7 @@ html = """
             };
             function sendMessage(event) {
                 var input = document.getElementById("messageText")
-                ws.send(input.value)
+                ws.send('{"sender": "killer", "receiver": "Nikita", "message": "andrey tot esche idiot"}')
                 input.value = ''
                 event.preventDefault()
             }

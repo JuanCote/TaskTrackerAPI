@@ -1,3 +1,5 @@
+import json
+
 import pymongo
 import pytz
 import os
@@ -5,13 +7,13 @@ import os
 import uvicorn
 from fastapi import FastAPI, Depends, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel, Field
-from typing import Optional, List
+from typing import Optional, List, Union
 from datetime import datetime, timedelta
 from bson.objectid import ObjectId
 from starlette.responses import JSONResponse, HTMLResponse
 
 from socket_manager import manager
-from db import cards, stats, users
+from db import cards, stats, users, chat_rooms
 from utils import verify_password, get_hashed_password, create_access_token
 from deps import get_current_user
 from test_file import html
@@ -315,13 +317,18 @@ async def ws_test():
 
 
 @app.websocket("/api/ws")
-async def websocket_endpoint(websocket: WebSocket, user: str = Depends(get_current_user)):
+async def websocket_endpoint(websocket: WebSocket): # , user: str = Depends(get_current_user) !!!!!!!!!!!!!!!!
+    user = 'Nikita'
     await manager.connect(websocket, user)
     try:
         while True:
             data = await websocket.receive_text()
-            # await manager.send_personal_message(f"You wrote: {data}", websocket)
-            await manager.broadcast()
+            converted_data = json.loads(data)
+            receiver = converted_data['receiver']
+            sender = converted_data['sender']
+            message = converted_data['message']
+            await manager.send_personal_message(receiver, sender, message)
+            await manager.broadcast(f"Client Nikita says: {data}")
     except WebSocketDisconnect:
         manager.disconnect(user)
 
@@ -346,3 +353,21 @@ async def chat_users(user: str = Depends(get_current_user)):
 
     return chat_users
 
+
+@app.get('/test')
+async def test():
+    cursor = chat_rooms.find_one({'members': ['killer', 'Nikita']})
+    if cursor is None:
+        cursor = chat_rooms.find_one({'members': ['Nikita', 'killer']})
+    for item in cursor['messages']:
+        print(item)
+
+
+@app.get('/test1')
+async def test():
+    chat_rooms.update_one({'members': ['Nasdasd', 'killer']}, {'$push': {'messages': {
+        'from': 'Nikita',
+        'to': 'killer',
+        'message': 'asdasdasd+asdasdaasdads',
+        'time': int(datetime.now().timestamp()*1000)
+    }}})

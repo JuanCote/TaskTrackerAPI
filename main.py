@@ -316,8 +316,8 @@ async def ws_test():
     return HTMLResponse(html)
 
 
-@app.websocket("/api/ws")
-async def websocket_endpoint(websocket: WebSocket, user: str = Depends(get_current_user)):
+@app.websocket("/api/ws/{user}")
+async def websocket_endpoint(websocket: WebSocket, user: str):
     print('ws')
     await manager.connect(websocket, user)
     try:

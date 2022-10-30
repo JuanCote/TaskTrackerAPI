@@ -313,6 +313,7 @@ async def me(user: str = Depends(get_current_user)):
 
 @app.get('/api/ws_test')
 async def ws_test():
+    print('ssshhiiit')
     return HTMLResponse(html)
 
 

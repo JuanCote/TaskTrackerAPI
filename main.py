@@ -313,13 +313,11 @@ async def me(user: str = Depends(get_current_user)):
 
 @app.get('/api/ws_test')
 async def ws_test():
-    print('ssshhiiit')
     return HTMLResponse(html)
 
 
 @app.websocket("/api/ws")
-async def websocket_endpoint(websocket: WebSocket, user="victor"):
-    print('ws')
+async def websocket_endpoint(websocket: WebSocket, user: str = Depends(get_current_user)):
     await manager.connect(websocket, user)
     try:
         while True:

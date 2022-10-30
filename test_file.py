@@ -16,7 +16,7 @@ html = """
         <script>
             var client_id = Date.now()
             document.querySelector("#ws-id").textContent = client_id;
-            var ws = new WebSocket(`wss://mobile-app-for-sanyok.herokuapp.com/api/ws`);
+            var ws = new WebSocket(`wss://backend-mobileapp-bdxinpar6-juancote.vercel.app/api/ws`);
 
             ws.onmessage = function(event) {
                 var messages = document.getElementById('messages')
@@ -38,3 +38,4 @@ html = """
 
 # var ws = new WebSocket(`wss://mobile-app-for-sanyok.herokuapp.com/api/ws/${client_id}`);
 # var ws = new WebSocket(`ws://localhost:8000/api/ws/${client_id}`);
+# wss://backend-mobileapp-bdxinpar6-juancote.vercel.app/api/ws

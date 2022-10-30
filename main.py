@@ -317,7 +317,7 @@ async def ws_test():
 
 
 @app.websocket("/api/ws")
-async def websocket_endpoint(websocket: WebSocket, user: str = Depends(get_current_user)):
+async def websocket_endpoint(websocket: WebSocket, user="victor"):
     await manager.connect(websocket, user)
     try:
         while True:

@@ -11,6 +11,7 @@ class ConnectionManager:
         self.active_connections = []
 
     async def connect(self, websocket: WebSocket, user):
+        print(self.active_connections)
         await websocket.accept()
         self.active_connections.append({'username': user, 'websocket': websocket})
 

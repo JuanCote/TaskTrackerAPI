@@ -16,7 +16,7 @@ html = """
         <script>
             var client_id = Date.now()
             document.querySelector("#ws-id").textContent = client_id;
-            var ws = new WebSocket(`wss://backend-mobileapp.vercel.app/api/ws:8000`);
+            var ws = new WebSocket(`wss://backend-mobileapp.vercel.app:8000/api/ws`);
 
             ws.onmessage = function(event) {
                 var messages = document.getElementById('messages')

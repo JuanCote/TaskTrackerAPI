@@ -383,3 +383,7 @@ async def get_chat(user2: str, user: str = Depends(get_current_user)):
         data = get_messages_from_chat(cursor)
 
     return JSONResponse(status_code=200, content=data)
+
+
+if __name__ == "__main__":
+    uvicorn.run("main:app", host="0.0.0.0", port=5000, log_level="info")

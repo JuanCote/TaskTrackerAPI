@@ -376,7 +376,7 @@ async def get_chat(user2: str, user: str = Depends(get_current_user)):
         cursor = chat_rooms.find_one({'members': [user2, user]})
         if cursor is None:
             create_chat(user, user2)
-            return JSONResponse(status_code=200, content={})
+            return JSONResponse(status_code=200, content=[])
         else:
             data = get_messages_from_chat(cursor)
     else:

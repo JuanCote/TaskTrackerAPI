@@ -318,7 +318,6 @@ async def ws_test():
 
 @app.websocket("/api/ws/{user}")
 async def websocket_endpoint(websocket: WebSocket, user: str):
-    print('ws')
     await manager.connect(websocket, user)
     try:
         while True:

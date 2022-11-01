@@ -30,20 +30,20 @@ ACCESS_TOKEN_EXPIRE_DAYS = 30
 
 class Card(BaseModel):
     title: str
-    date: datetime
+    date: int  # timestamp
     counter: int
 
 
 class UpdateCard(BaseModel):
     title: Optional[str]
     counter: Optional[int]
-    date: datetime
+    date: int  # timestamp
 
 
 class ResponseCard(BaseModel):
     id: str
     title: str
-    date: datetime
+    date: int  # timestamp
     counter: int
     user: str
 
@@ -84,8 +84,9 @@ async def get_cards(user: str = Depends(get_current_user)):
         current_time = datetime.now(timezone).replace(tzinfo=None)
 
         difference = int((current_time - card['viewed']).total_seconds() // 3600)
-        if difference > 24 or current_time.day != card['viewed'].day:
-            stats.update_one({'card': str(card['_id'])}, {'$set': {str(card['viewed'].strftime('%Y-%m-%d')): card['counter']}})
+        if difference > 24 or current_time.day != card['viewed'].day:  # checking on different days and adding to statistics
+            stats.update_one({'card': str(card['_id'])},
+                             {'$set': {str(card['viewed'].strftime('%Y-%m-%d')): card['counter']}})
             delta = current_time - card['viewed']
             if delta.days > 1:
                 data_update = dict()
@@ -358,14 +359,14 @@ async def chat_users(user: str = Depends(get_current_user)):
         'content': {
             'application/json': {
                 'example': [{
-                            "from": "killer",
-                            "to": "Nikita",
-                            "message": "+"
-                        }, {
-                            "from": "killer",
-                            "to": "Nikita",
-                            "message": "+"
-                        }]
+                    "from": "killer",
+                    "to": "Nikita",
+                    "message": "+"
+                }, {
+                    "from": "killer",
+                    "to": "Nikita",
+                    "message": "+"
+                }]
             }
         }
     },
@@ -383,4 +384,3 @@ async def get_chat(user2: str, user: str = Depends(get_current_user)):
         data = get_messages_from_chat(cursor)
 
     return JSONResponse(status_code=200, content=data)
-

@@ -29,7 +29,8 @@ class ConnectionManager:
                 break
 
         if websocket is not None:
-            await websocket.send_text(message)
+            data = {'sender': sender, 'message': message}
+            await websocket.send_text(str(data))
 
     async def broadcast(self, message: str):
         pass

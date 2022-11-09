@@ -11,6 +11,7 @@ from typing import Optional, List, Union
 from datetime import datetime, timedelta
 from bson.objectid import ObjectId
 from starlette.responses import JSONResponse, HTMLResponse
+from deps import decode_token
 
 from socket_manager import manager
 from db import cards, stats, users, chat_rooms, create_chat
@@ -317,8 +318,9 @@ async def ws_test():
     return HTMLResponse(html)
 
 
-@app.websocket("/api/ws/{user}")
-async def websocket_endpoint(websocket: WebSocket, user: str): # , user: str = Depends(get_current_user)
+@app.websocket("/api/ws/{token}")
+async def websocket_endpoint(websocket: WebSocket, token: str):
+    user = decode_token(token)
     await manager.connect(websocket, user)
     try:
         while True:

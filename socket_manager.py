@@ -21,7 +21,6 @@ class ConnectionManager:
 
     async def send_personal_message(self, receiver: str, sender: str, message: str):
         insert_message(receiver, sender, message)
-
         websocket = None
         for item in self.active_connections:
             if item.get('username') == receiver:

@@ -320,7 +320,7 @@ async def ws_test():
 
 @app.websocket("/api/ws/{token}")
 async def websocket_endpoint(websocket: WebSocket, token: str):
-    user = decode_token(token)
+    user = await decode_token(token)
     await manager.connect(websocket, user)
     try:
         while True:

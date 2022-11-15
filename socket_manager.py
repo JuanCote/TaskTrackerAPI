@@ -29,7 +29,7 @@ class ConnectionManager:
 
         if websocket is not None:
             data = {'sender': sender, 'message': message}
-            await websocket.send_text(str(data))
+            await websocket.send_json(data)
 
     async def broadcast(self, message: str):
         pass

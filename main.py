@@ -324,11 +324,10 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
     await manager.connect(websocket, user)
     try:
         while True:
-            data = await websocket.receive_text()
-            converted_data = json.loads(data)
-            receiver = converted_data['receiver']
-            sender = converted_data['sender']
-            message = converted_data['message']
+            data = await websocket.receive_json()
+            receiver = data['receiver']
+            sender = data['sender']
+            message = data['message']
             await manager.send_personal_message(receiver, sender, message)
     except WebSocketDisconnect:
         manager.disconnect(user)

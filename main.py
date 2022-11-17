@@ -85,7 +85,8 @@ async def get_cards(user: str = Depends(get_current_user)):
         current_time = datetime.now(timezone).replace(tzinfo=None)
 
         difference = int((current_time - card['viewed']).total_seconds() // 3600)
-        if difference > 24 or current_time.day != card['viewed'].day:  # checking on different days and adding to statistics
+        if difference > 24 or current_time.day != card[
+            'viewed'].day:  # checking on different days and adding to statistics
             stats.update_one({'card': str(card['_id'])},
                              {'$set': {str(card['viewed'].strftime('%Y-%m-%d')): card['counter']}})
             delta = current_time - card['viewed']
@@ -335,23 +336,51 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
 
 @app.get('/api/chat_users', tags=['chat'], responses={
     200: {
-        'description': 'Gives back all users',
+        'description': 'Gives back chats the user has participated in',
         'content': {
             'application/json': {
-                'example': [{'username': 'Stepan'}, {'username': 'Sanyok'}]
+                'example': [
+                    {
+                        'username': 'bluefqcebaby',
+                        'last_message': {
+                            "from": "bluefqcebaby",
+                            "to": "Nikita",
+                            "message": "Andrey daunik",
+                            "time": 1668698229591
+                        }
+                    },
+                    {
+                        'username': 'Viktor',
+                        'last_message': {
+                            "from": "Nikita",
+                            "to": "Viktor",
+                            "message": "Andrey idiot",
+                            "time": 1668698229591
+                        }
+                    }
+                ]
             }
         }
     },
 })
 async def chat_users(user: str = Depends(get_current_user)):
-    cursor = users.find()
+    chats = chat_rooms.find({'members': {'$all': [user]}}, {'_id': 0})
 
-    chat_users = []
-    for item in cursor:
-        if item['username'] != user:
-            chat_users.append({'username': item['username']})
+    data = list()
+    for chat in chats:
+        last_message = chat['messages'][-1]  # last chat message
+        if last_message['from'] == user:
+            last_message['is_myself'] = True
+        else:
+            last_message['is_myself'] = False
+        del last_message['from'], last_message['to']
+        data.append({
+            'username': [el for el in chat['members'] if el != user][0],  # who is chatting with
+            'last_message': last_message
 
-    return chat_users
+        })
+
+    return data
 
 
 @app.get('/api/get_chat/{user2}', tags=['chat'], responses={
@@ -373,15 +402,31 @@ async def chat_users(user: str = Depends(get_current_user)):
     },
 })
 async def get_chat(user2: str, user: str = Depends(get_current_user)):
-    cursor = chat_rooms.find_one({'members': [user, user2]})
+    cursor = chat_rooms.find_one({'members': {'$all': [user, user2]}})
     if cursor is None:
-        cursor = chat_rooms.find_one({'members': [user2, user]})
-        if cursor is None:
-            create_chat(user, user2)
-            return JSONResponse(status_code=200, content=[])
-        else:
-            data = get_messages_from_chat(cursor)
+        return JSONResponse(status_code=200, content=[])
     else:
         data = get_messages_from_chat(cursor)
 
     return JSONResponse(status_code=200, content=data)
+
+
+@app.get('/api/chat_search/{search}', tags=['chat'], responses={
+    200: {
+        'description': 'Return a list of users',
+        'content': {
+            'application/json': {
+                'example': [
+                    {
+                        "username": "killer"
+                    },
+                    {
+                        "username": "e.v.kartashova"
+                    }
+                ]
+            }
+        }
+    },
+})
+async def get_chat(search: str, user: str = Depends(get_current_user)):
+    return list(users.find({'username': {'$regex': search}}, {'_id': 0, 'password': 0}))

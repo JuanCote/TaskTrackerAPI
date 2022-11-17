@@ -18,13 +18,12 @@ def insert_message(receiver: str, sender: str, message: str):
         'message': message,
         'time': int(datetime.now().timestamp() * 1000)
     }}}
-    cursor = chat_rooms.find_one({'members': [receiver, sender]})
+    cursor = chat_rooms.find_one({'members': {'$all': [receiver, sender]}})
     if cursor is not None:
-        chat_rooms.update_one({'members': [receiver, sender]}, dict_to_push)
+        chat_rooms.update_one({'members': {'$all': [receiver, sender]}}, dict_to_push)
     else:
-        cursor = chat_rooms.find_one({'members': [sender, receiver]})
-        if cursor is not None:
-            chat_rooms.update_one({'members': [sender, receiver]}, dict_to_push)
+        create_chat(sender, receiver)
+        chat_rooms.update_one({'members': {'$all': [receiver, sender]}}, dict_to_push)
 
 
 def create_chat(user, user2):

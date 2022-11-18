@@ -428,5 +428,5 @@ async def get_chat(user2: str, user: str = Depends(get_current_user)):
         }
     },
 })
-async def get_chat(search: str, user: str = Depends(get_current_user)):
+async def search_chat(search: str, user: str = Depends(get_current_user)):
     return list(users.find({'username': {'$regex': search}}, {'_id': 0, 'password': 0}))

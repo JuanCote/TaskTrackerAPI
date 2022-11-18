@@ -20,7 +20,7 @@ class ConnectionManager:
                 self.active_connections.remove(item)
 
     async def send_personal_message(self, receiver: str, sender: str, message: str):
-        insert_message(receiver, sender, message)
+        data = insert_message(receiver, sender, message)
         websocket = None
         for item in self.active_connections:
             if item.get('username') == receiver:
@@ -28,7 +28,6 @@ class ConnectionManager:
                 break
 
         if websocket is not None:
-            data = {'sender': sender, 'message': message}
             await websocket.send_json(data)
 
     async def broadcast(self, message: str):

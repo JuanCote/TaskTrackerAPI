@@ -20,6 +20,7 @@ class ConnectionManager:
                 self.active_connections.remove(item)
 
     async def send_personal_message(self, receiver: str, sender: str, message: str):
+        print(self.active_connections)
         data = insert_message(receiver, sender, message)
         websocket = None
         for item in self.active_connections:

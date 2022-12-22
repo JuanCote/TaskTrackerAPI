@@ -8,21 +8,23 @@ from db import insert_message
 
 class ConnectionManager:
     def __init__(self):
-        self.active_connections = []
+        self.connections = []
+        self.authorized_connections = []
 
-    async def connect(self, websocket: WebSocket, user):
+    async def connect(self, websocket: WebSocket):
         await websocket.accept()
-        self.active_connections.append({'username': user, 'websocket': websocket})
+        self.connections.append(websocket)
 
-    def disconnect(self, user):
-        for item in self.active_connections.copy():
-            if item.get('username') == user:
-                self.active_connections.remove(item)
+    def disconnect(self, websocket: WebSocket):
+        for item in self.authorized_connections:
+            if item.get('websocket') == websocket:
+                self.authorized_connections.remove(item)
+        manager.connections.remove(websocket)
 
     async def send_personal_message(self, receiver: str, sender: str, message: str):
         data = insert_message(receiver, sender, message)
         websocket = None
-        for item in self.active_connections:
+        for item in self.authorized_connections:
             if item.get('username') == receiver:
                 websocket = item.get('websocket')
                 break

@@ -319,19 +319,26 @@ async def ws_test():
     return HTMLResponse(html)
 
 
-@app.websocket("/api/ws/{token}")
-async def websocket_endpoint(websocket: WebSocket, token: str):
-    user = await decode_token(token)
-    await manager.connect(websocket, user)
+@app.websocket("/api/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await manager.connect(websocket)
     try:
         while True:
             data = await websocket.receive_json()
-            receiver = data['receiver']
-            sender = data['sender']
-            message = data['message']
-            await manager.send_personal_message(receiver, sender, message)
+            if 'token' in data.keys():
+                user = await decode_token(data['token'])
+                manager.authorized_connections.append({'username': user, 'websocket': websocket})
+                await websocket.send_text("successful authorization")
+            else:
+                if not any(d['websocket'] == websocket for d in manager.authorized_connections):
+                    await websocket.send_text('websocket not authorized')
+                else:
+                    receiver = data['receiver']
+                    sender = data['sender']
+                    message = data['message']
+                    await manager.send_personal_message(receiver, sender, message)
     except WebSocketDisconnect:
-        manager.disconnect(user)
+        manager.disconnect(websocket)
 
 
 @app.get('/api/chat_users', tags=['chat'], responses={
@@ -429,4 +436,4 @@ async def get_chat(user2: str, user: str = Depends(get_current_user)):
     },
 })
 async def search_chat(search: str, user: str = Depends(get_current_user)):
-    return list(users.find({'username': {'$regex': search}}, {'_id': 0, 'password': 0}))
+    return list(users.find({'username': {'$regex': search, '$options': 'i', '$ne': user}}, {'_id': 0, 'password': 0}))

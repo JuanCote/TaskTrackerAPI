@@ -1,13 +1,19 @@
+import os
 from datetime import datetime
+
+import pytz
 from pymongo import MongoClient
 
-MONGODB_URI = 'mongodb+srv://JuanCote:tfkn7C64u55PFtl4@cluster0.lecracw.mongodb.net/?retryWrites=true&w=majority'
+timezone = pytz.timezone('Europe/Moscow')
+
+MONGODB_URI = os.getenv('mongodb-uri')
 client = MongoClient(MONGODB_URI)
 db = client.Sanyok
 
 cards = db.cards
 stats = db.stats
 users = db.users
+week_cards = db.week_cards
 chat_rooms = db.chat_rooms
 
 
@@ -34,3 +40,38 @@ def create_chat(user, user2):
         'messages': []
     })
 
+
+def create_week_card(user):
+    data = {
+        'user': user,
+        'cards': dict(),
+        'last_checked': datetime.now(timezone)
+    }
+    days = ("monday", "tuesday", 'wednesday', 'thursday', 'friday', 'saturday', 'sunday')
+    for i in range(0, len(days)):
+        data['cards'].update({
+            days[i]: {
+                'tasks': [],
+            }
+        })
+    try:
+        week_cards.insert_one(data)
+        return data
+    except:
+        return False
+
+
+def check_week(user):
+    week_card = week_cards.find_one({'user': user})
+    check_date = week_card['last_checked']
+    curr_week = datetime.now(timezone).strftime("%V")
+    if not check_date.strftime("%V") == curr_week:
+        pass
+    else:
+        week_card['last_checked'] = datetime.now(timezone)
+        for el in week_card['cards'].items():
+            for task in el[1]['tasks']:
+                task['is_completed'] = False
+        week_cards.update_one({'user': user}, {'$set': week_card})
+
+    return week_card

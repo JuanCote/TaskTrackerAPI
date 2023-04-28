@@ -5,7 +5,7 @@ import pytz
 import os
 
 import uvicorn
-from fastapi import FastAPI, Depends, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, Depends, WebSocket, WebSocketDisconnect, HTTPException
 from pydantic import BaseModel, Field
 from typing import Optional, List, Union
 from datetime import datetime, timedelta
@@ -14,19 +14,13 @@ from starlette.responses import JSONResponse, HTMLResponse
 from deps import decode_token
 
 from socket_manager import manager
-from db import cards, stats, users, chat_rooms, create_chat
+from db import cards, stats, users, chat_rooms, create_chat, week_cards, create_week_card, timezone, check_week
 from utils import verify_password, get_hashed_password, create_access_token, get_messages_from_chat
 from deps import get_current_user
 from test_file import html
 from socket_manager import ConnectionManager
 
 app = FastAPI(docs_url="/")
-
-timezone = pytz.timezone('Europe/Moscow')
-
-SECRET_KEY = os.environ.get('mobile_secret_code')
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_DAYS = 30
 
 
 class Card(BaseModel):
@@ -253,7 +247,7 @@ async def registration(user: AuthUser):
     return JSONResponse(status_code=200, content={'message': 'registration completed successfully'})
 
 
-@app.post('/api/login', tags=['auth'], responses={
+@app.get('/api/login', tags=['auth'], responses={
     404: {
         "description": "User not found",
         "content": {
@@ -437,3 +431,119 @@ async def get_chat(user2: str, user: str = Depends(get_current_user)):
 })
 async def search_chat(search: str, user: str = Depends(get_current_user)):
     return list(users.find({'username': {'$regex': search, '$options': 'i', '$ne': user}}, {'_id': 0, 'password': 0}))
+
+
+@app.get('/api/get_week_cards', tags=['week_card'], responses={
+    200: {
+        'description': 'Returns today`s week card',
+        'content': {
+            'application/json': {
+                'example': [
+                    {
+                        "monday": {
+                            "tasks": [
+                                {
+                                    "is_completed": False,
+                                    "task": "asdasd"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    },
+})
+async def get_week_cards(user: str = Depends(get_current_user)):
+    week_card = week_cards.find_one({'user': user})
+    if week_card is None:
+        week_card = create_week_card(user)
+        if not week_card:
+            raise HTTPException(status_code=500, detail="DB error")
+    else:
+        week_card = check_week(user)
+
+    week_day = datetime.now(timezone).weekday()
+    today_card = list(week_card['cards'].items())[week_day]
+    data = {today_card[0]: today_card[1]}
+
+    return JSONResponse(status_code=200, content=data)
+
+
+@app.get('/api/get_all_week_cards', tags=['week_card'], responses={
+    200: {
+        'description': 'Returns all week cards',
+        'content': {
+            'application/json': {
+                'example': [
+                    [
+                        {
+                            "monday": {
+                                "tasks": [
+                                    {
+                                        "is_completed": False,
+                                        "task": "asdasd"
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "tuesday": {
+                                "tasks": []
+                            }
+                        },
+                        {
+                            "wednesday": {
+                                "tasks": []
+                            }
+                        },
+                        {
+                            "thursday": {
+                                "tasks": []
+                            }
+                        },
+                        {
+                            "friday": {
+                                "tasks": []
+                            }
+                        },
+                        {
+                            "saturday": {
+                                "tasks": []
+                            }
+                        },
+                        {
+                            "sunday": {
+                                "tasks": []
+                            }
+                        }
+                    ]
+                ]
+            }
+        }
+    },
+})
+async def get_all_week_cards(user: str = Depends(get_current_user)):
+    week_card = week_cards.find_one({'user': user})
+    if week_card is None:
+        week_card = create_week_card(user)
+        if not week_card:
+            raise HTTPException(status_code=500, detail="DB error")
+    else:
+        week_card = check_week(user)
+
+    data = list()
+    for key, value in week_card['cards'].items():
+        data.append({key: value})
+
+    return JSONResponse(status_code=200, content=data)
+
+
+@app.post('/api/change_week_card', tags=['week_card'])
+async def change_week_card(user: str = Depends(get_current_user)):
+    pass
+
+
+@app.get('/api/test')
+async def test():
+    check_week("Nikita")

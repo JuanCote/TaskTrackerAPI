@@ -6,7 +6,7 @@ from pymongo import MongoClient
 
 timezone = pytz.timezone('Europe/Moscow')
 
-MONGODB_URI = os.getenv('mongodb-uri')
+MONGODB_URI = os.getenv('MONGODB_URI')
 client = MongoClient(MONGODB_URI)
 db = client.Sanyok
 

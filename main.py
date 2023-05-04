@@ -247,7 +247,7 @@ async def registration(user: AuthUser):
     return JSONResponse(status_code=200, content={'message': 'registration completed successfully'})
 
 
-@app.get('/api/login', tags=['auth'], responses={
+@app.post('/api/login', tags=['auth'], responses={
     404: {
         "description": "User not found",
         "content": {

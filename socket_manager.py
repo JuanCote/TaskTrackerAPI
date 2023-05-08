@@ -25,7 +25,7 @@ class ConnectionManager:
 
     async def send_personal_message(self, data: dict, websocket: WebSocket):
         if not any(d['websocket'] == websocket for d in manager.authorized_connections):
-            await websocket.send_json({'status': 0, 'data': 'websocket not authorized'})
+            await websocket.send_json({'event': 'send_message', 'status': 0, 'data': 'websocket not authorized'})
         else:
             receiver, sender, message = data['data']['receiver'], data['data']['sender'], data['data']['message']
             data = insert_message(receiver, sender, message)
@@ -36,19 +36,20 @@ class ConnectionManager:
                     break
 
             if websocket is not None:
-                await websocket.send_json(data)
+                result = {'event': 'send_message', 'data': data}
+                await websocket.send_json(result)
 
     async def authorize(self, data: dict, websocket: WebSocket):
         if not 'token' in data['data'].keys():
-            await websocket.send_json({'status': 0, 'data': 'missing key "token"'})
+            await websocket.send_json({'event': 'auth', 'status': 0, 'data': 'missing key "token"'})
         else:
             user = await decode_token(data['data']['token'])
             if not user:
-                await websocket.send_json({'status': 0, 'data': 'invalid token'})
+                await websocket.send_json({'event': 'auth', 'status': 0, 'data': 'invalid token'})
             else:
                 manager.authorized_connections.append({'username': user, 'websocket': websocket})
                 chats = await chat_users(user)
-                await websocket.send_json({'status': 1, 'data': chats})
+                await websocket.send_json({'event': 'auth', 'status': 1, 'data': chats})
 
     async def broadcast(self, message: str):
         pass

@@ -24,15 +24,18 @@ async def decode_token(token: str):
         payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
         return username
-    except ExpiredSignatureError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token expired",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    except JWTError:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Could not validate credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    except:
+        return False
+    # except ExpiredSignatureError:
+    #     # raise HTTPException(
+    #     #     status_code=status.HTTP_401_UNAUTHORIZED,
+    #     #     detail="Token expired",
+    #     #     headers={"WWW-Authenticate": "Bearer"},
+    #     # )
+    # except JWTError:
+    #     pass
+    #     # raise HTTPException(
+    #     #     status_code=status.HTTP_403_FORBIDDEN,
+    #     #     detail="Could not validate credentials",
+    #     #     headers={"WWW-Authenticate": "Bearer"},
+    #     # )

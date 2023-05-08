@@ -5,7 +5,7 @@ from typing import Union, Any
 from jose import jwt
 
 ACCESS_TOKEN_EXPIRE_DAYS = 30
-JWT_SECRET_KEY = os.environ.get('mobile_secret_code')
+JWT_SECRET_KEY = os.environ.get('MOBILE_SECRET_CODE')
 ALGORITHM = "HS256"
 
 password_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

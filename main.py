@@ -12,6 +12,7 @@ from datetime import datetime, timedelta
 from bson.objectid import ObjectId
 from starlette.responses import JSONResponse, HTMLResponse
 from deps import decode_token
+from model.chat import chat_users
 
 from socket_manager import manager
 from db import cards, stats, users, chat_rooms, create_chat, week_cards, create_week_card, timezone, check_week
@@ -308,80 +309,18 @@ async def me(user: str = Depends(get_current_user)):
     return {'username': user}
 
 
-@app.get('/api/ws_test')
-async def ws_test():
-    return HTMLResponse(html)
-
-
 @app.websocket("/api/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)
     try:
         while True:
             data = await websocket.receive_json()
-            if 'token' in data.keys():
-                user = await decode_token(data['token'])
-                manager.authorized_connections.append({'username': user, 'websocket': websocket})
-                await websocket.send_text("successful authorization")
-            else:
-                if not any(d['websocket'] == websocket for d in manager.authorized_connections):
-                    await websocket.send_text('websocket not authorized')
-                else:
-                    receiver = data['receiver']
-                    sender = data['sender']
-                    message = data['message']
-                    await manager.send_personal_message(receiver, sender, message)
+            if 'event' in data.keys() and data['event'] == 'auth':
+                await manager.authorize(data, websocket)
+            elif 'event' in data.keys() and data['event'] == 'send_message':
+                await manager.send_personal_message(data, websocket)
     except WebSocketDisconnect:
         manager.disconnect(websocket)
-
-
-@app.get('/api/chat_users', tags=['chat'], responses={
-    200: {
-        'description': 'Gives back chats the user has participated in',
-        'content': {
-            'application/json': {
-                'example': [
-                    {
-                        'username': 'bluefqcebaby',
-                        'last_message': {
-                            "from": "bluefqcebaby",
-                            "to": "Nikita",
-                            "message": "Andrey daunik",
-                            "time": 1668698229591
-                        }
-                    },
-                    {
-                        'username': 'Viktor',
-                        'last_message': {
-                            "from": "Nikita",
-                            "to": "Viktor",
-                            "message": "Andrey idiot",
-                            "time": 1668698229591
-                        }
-                    }
-                ]
-            }
-        }
-    },
-})
-async def chat_users(user: str = Depends(get_current_user)):
-    chats = chat_rooms.find({'members': {'$all': [user]}}, {'_id': 0})
-
-    data = list()
-    for chat in chats:
-        last_message = chat['messages'][-1]  # last chat message
-        if last_message['from'] == user:
-            last_message['is_myself'] = True
-        else:
-            last_message['is_myself'] = False
-        del last_message['from'], last_message['to']
-        data.append({
-            'username': [el for el in chat['members'] if el != user][0],  # who is chatting with
-            'last_message': last_message
-
-        })
-
-    return data
 
 
 @app.get('/api/get_chat/{user2}', tags=['chat'], responses={

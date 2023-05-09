@@ -25,9 +25,9 @@ class ConnectionManager:
 
     async def send_personal_message(self, data: dict, websocket: WebSocket):
         if not any(d['websocket'] == websocket for d in manager.authorized_connections):
-            await websocket.send_json({'event': 'send_message', 'status': 0, 'data': 'websocket not authorized'})
+            await websocket.send_json({'event': 'receive_message', 'status': 0, 'data': 'websocket not authorized'})
         else:
-            receiver, sender, message = data['data']['receiver'], data['data']['sender'], data['data']['message']
+            receiver, sender, message = data['data']['to'], data['data']['from'], data['data']['message']
             data = insert_message(receiver, sender, message)
             websocket = None
             for item in self.authorized_connections:
@@ -36,7 +36,7 @@ class ConnectionManager:
                     break
 
             if websocket is not None:
-                result = {'event': 'send_message', 'data': data}
+                result = {'event': 'receive_message', 'data': data}
                 await websocket.send_json(result)
 
     async def authorize(self, data: dict, websocket: WebSocket):

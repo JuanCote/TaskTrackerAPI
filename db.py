@@ -31,7 +31,7 @@ def insert_message(receiver: str, sender: str, message: str):
     else:
         create_chat(sender, receiver)
         chat_rooms.update_one({'members': {'$all': [receiver, sender]}}, dict_to_push)
-    return {'sender': sender, 'message': message, 'time': time_now}
+    return {'from': sender, 'to': receiver, 'message': message, 'time': time_now}
 
 
 def create_chat(user, user2):

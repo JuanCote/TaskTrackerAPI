@@ -23,7 +23,8 @@ def insert_message(receiver: str, sender: str, message: str):
         'from': sender,
         'to': receiver,
         'message': message,
-        'time': time_now
+        'time': time_now,
+        'id': time_now
     }}}
     cursor = chat_rooms.find_one({'members': {'$all': [receiver, sender]}})
     if cursor is not None:
@@ -31,7 +32,7 @@ def insert_message(receiver: str, sender: str, message: str):
     else:
         create_chat(sender, receiver)
         chat_rooms.update_one({'members': {'$all': [receiver, sender]}}, dict_to_push)
-    return {'from': sender, 'to': receiver, 'message': message, 'time': time_now}
+    return {'from': sender, 'to': receiver, 'message': message, 'time': time_now, 'id': time_now}
 
 
 def create_chat(user, user2):

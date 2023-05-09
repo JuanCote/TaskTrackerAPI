@@ -29,6 +29,7 @@ class ConnectionManager:
         else:
             receiver, sender, message = data['data']['to'], data['data']['from'], data['data']['message']
             data = insert_message(receiver, sender, message)
+            websocket_receiver = None
             for item in self.authorized_connections:
                 if item.get('username') == receiver:
                     websocket_receiver = item.get('websocket')
@@ -36,6 +37,7 @@ class ConnectionManager:
             result = {'event': 'receive_message', 'data': data}
             await websocket.send_json(result)
             if websocket_receiver is not None:
+                print(websocket_receiver)
                 await websocket_receiver.send_json(result)
 
     async def authorize(self, data: dict, websocket: WebSocket):

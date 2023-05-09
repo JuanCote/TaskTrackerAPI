@@ -6,7 +6,7 @@ async def chat_users(user):
 
     data = list()
     for chat in chats:
-        last_message = chat['messages'][-1]  # last chat message
+        last_message = chat['messages'][-1].copy()  # last chat message
         if last_message['from'] == user:
             last_message['is_myself'] = True
         else:

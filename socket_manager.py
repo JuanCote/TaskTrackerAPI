@@ -34,9 +34,9 @@ class ConnectionManager:
                     websocket_receiver = item.get('websocket')
                     break
             result = {'event': 'receive_message', 'data': data}
-            await websocket_receiver.send_json(result)
-            if websocket is not None:
-                await websocket.send_json(result)
+            await websocket.send_json(result)
+            if websocket_receiver is not None:
+                await websocket_receiver.send_json(result)
 
     async def authorize(self, data: dict, websocket: WebSocket):
         if not 'token' in data['data'].keys():

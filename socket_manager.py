@@ -39,14 +39,15 @@ class ConnectionManager:
                 data["data"]["from"],
                 data["data"]["message"],
             )
-            message = encrypt_message(message)
-            data = await insert_message(receiver, sender, message)
+
             message_to_notify = MessagePayload(
                 username=receiver,
                 message=receiver,
                 notify={"title": sender, "body": message},
             )
             await notify_dao.send(message_to_notify)
+            message = encrypt_message(message)
+            data = await insert_message(receiver, sender, message)
             data["message"] = decrypt_message(data["message"])
             websocket_receiver = None
             for item in self.authorized_connections:
@@ -82,6 +83,10 @@ class ConnectionManager:
                         {"username": user, "websocket": websocket}
                     )
                     chats = await chat_users(user)
+                    for item in chats:
+                        item['last_message']['message'] = decrypt_message(item['last_message']['message'])
+                        for message in item['messages']:
+                            message['message'] = decrypt_message( message['message'])
                     await websocket.send_json({"event": "auth", "status": 1, "data": chats})
 
     async def broadcast(self, message: str):

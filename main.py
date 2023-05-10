@@ -10,6 +10,7 @@ from socket_manager import manager
 from db import cards, stats, users, chat_rooms, create_chat, week_cards, create_week_card, timezone, check_week
 from utils.auth import get_current_user
 from utils.chat import get_messages_from_chat
+from fcm import fcm_scv
 
 app = FastAPI(docs_url="/")
 
@@ -17,6 +18,8 @@ app.include_router(card_router.router)
 app.include_router(login_router.router)
 app.include_router(register_router.router)
 app.include_router(socket_router.router)
+
+fcm_scv.init()
 
 
 @app.get('/api/get_stat/{card_id}', tags=['cards'], responses={

@@ -6,7 +6,7 @@ from fcm import fcm_scv
 
 
 async def save_device_token(user_device: UserDevicePayload):
-    users.update_one({'username': user_device.username}, {'$set': {'device_tokens': user_device.token}})
+    users.update_one({'username': user_device.username}, {'$set': {'device_token': user_device.token}})
 
 
 async def get_device_token(username: str):

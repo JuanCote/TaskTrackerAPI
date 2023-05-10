@@ -4,8 +4,8 @@ import starlette.websockets
 from fastapi import WebSocket
 
 from db import insert_message
-from deps import decode_token
-from model.chat import chat_users
+from utils.auth import decode_token
+from utils.chat import chat_users
 
 
 class ConnectionManager:

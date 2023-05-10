@@ -1,6 +1,13 @@
 from db import chat_rooms
 
 
+def get_messages_from_chat(cursor):
+    data = []
+    for item in cursor['messages']:
+        data.append(item)
+    return data
+
+
 async def chat_users(user):
     chats = chat_rooms.find({'members': {'$all': [user]}}, {'_id': 0})
 

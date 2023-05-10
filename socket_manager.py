@@ -41,7 +41,7 @@ class ConnectionManager:
                 sender=data["data"]["from"],
                 receiver=data["data"]["to"],
                 message=data["data"]["message"],
-                date=date_now,
+                time=date_now,
                 id=date_now
             )
             websocket_receiver = None

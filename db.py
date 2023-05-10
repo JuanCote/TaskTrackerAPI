@@ -26,7 +26,7 @@ async def insert_message(message: Message):
         'from': message.sender,
         'to': message.receiver,
         'message': encrypt_message(message.message),
-        'time': message.date,
+        'time': message.time,
         'id': message.id
     }}}
     cursor = chat_rooms.find_one({'members': {'$all': [message.receiver, message.sender]}})

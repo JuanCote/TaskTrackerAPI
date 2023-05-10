@@ -5,5 +5,5 @@ class Message(BaseModel):
     sender: str
     receiver: str
     message: str
-    date: int  # timestamp
+    time: int  # timestamp
     id: int

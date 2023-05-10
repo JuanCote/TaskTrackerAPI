@@ -5,7 +5,7 @@ from fastapi import WebSocket
 
 from db import insert_message
 from utils.auth import decode_token
-from utils.chat import chat_users
+from utils.chat import chat_users, encrypt_message, decrypt_message
 
 
 class ConnectionManager:
@@ -28,7 +28,9 @@ class ConnectionManager:
             await websocket.send_json({'event': 'receive_message', 'status': 0, 'data': 'websocket not authorized'})
         else:
             receiver, sender, message = data['data']['to'], data['data']['from'], data['data']['message']
-            data = insert_message(receiver, sender, message)
+            message = encrypt_message(message)
+            data = await insert_message(receiver, sender, message)
+            data['message'] = decrypt_message(data['message'])
             websocket_receiver = None
             for item in self.authorized_connections:
                 if item.get('username') == receiver:
@@ -37,7 +39,6 @@ class ConnectionManager:
             result = {'event': 'receive_message', 'data': data}
             await websocket.send_json(result)
             if websocket_receiver is not None:
-                print(websocket_receiver)
                 await websocket_receiver.send_json(result)
 
     async def authorize(self, data: dict, websocket: WebSocket):

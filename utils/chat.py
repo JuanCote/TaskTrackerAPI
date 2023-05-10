@@ -1,11 +1,28 @@
 from db import chat_rooms
 
 
+KEY = 7
+
+
 def get_messages_from_chat(cursor):
     data = []
     for item in cursor['messages']:
         data.append(item)
     return data
+
+
+def encrypt_message(text):
+    encrypted = ""
+    for char in text:
+        encrypted += chr(ord(char) + KEY)
+    return encrypted
+
+
+def decrypt_message(encrypted_text):
+    decrypted = ""
+    for char in encrypted_text:
+        decrypted += chr(ord(char) - KEY)
+    return decrypted
 
 
 async def chat_users(user):

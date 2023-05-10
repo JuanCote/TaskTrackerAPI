@@ -17,7 +17,7 @@ week_cards = db.week_cards
 chat_rooms = db.chat_rooms
 
 
-def insert_message(receiver: str, sender: str, message: str):
+async def insert_message(receiver: str, sender: str, message: str):
     time_now = int(datetime.now().timestamp() * 1000)
     dict_to_push = {'$push': {'messages': {
         'from': sender,

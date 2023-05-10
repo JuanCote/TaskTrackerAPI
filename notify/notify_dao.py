@@ -1,7 +1,7 @@
 import json
 
 from db import users
-from notify import MessagePayload, Response, ErrorResponse, UserDevicePayload
+from notify import Response, ErrorResponse, UserDevicePayload, MessagePayload
 from fcm import fcm_scv
 
 

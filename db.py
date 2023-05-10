@@ -4,6 +4,8 @@ from datetime import datetime
 import pytz
 from pymongo import MongoClient
 
+from model.message_model import Message
+
 timezone = pytz.timezone('Europe/Moscow')
 
 MONGODB_URI = os.getenv('MONGODB_URI')
@@ -17,22 +19,22 @@ week_cards = db.week_cards
 chat_rooms = db.chat_rooms
 
 
-async def insert_message(receiver: str, sender: str, message: str):
-    time_now = int(datetime.now().timestamp() * 1000)
+async def insert_message(message: Message):
+    from utils.chat import encrypt_message
+
     dict_to_push = {'$push': {'messages': {
-        'from': sender,
-        'to': receiver,
-        'message': message,
-        'time': time_now,
-        'id': time_now
+        'from': message.sender,
+        'to': message.receiver,
+        'message': encrypt_message(message.message),
+        'time': message.date,
+        'id': message.id
     }}}
-    cursor = chat_rooms.find_one({'members': {'$all': [receiver, sender]}})
+    cursor = chat_rooms.find_one({'members': {'$all': [message.receiver, message.sender]}})
     if cursor is not None:
-        chat_rooms.update_one({'members': {'$all': [receiver, sender]}}, dict_to_push)
+        chat_rooms.update_one({'members': {'$all': [message.receiver, message.sender]}}, dict_to_push)
     else:
-        create_chat(sender, receiver)
-        chat_rooms.update_one({'members': {'$all': [receiver, sender]}}, dict_to_push)
-    return {'from': sender, 'to': receiver, 'message': message, 'time': time_now, 'id': time_now}
+        create_chat(message.sender, message.receiver)
+        chat_rooms.update_one({'members': {'$all': [message.receiver, message.sender]}}, dict_to_push)
 
 
 def create_chat(user, user2):

@@ -49,7 +49,14 @@ class ConnectionManager:
                 if item.get("username") == message.receiver:
                     websocket_receiver = item.get("websocket")
                     break
-            result = {"event": "receive_message", "data": dict(message)}
+            message_socket = {
+                "from": message.sender,
+                "to": message.receiver,
+                "message": message.message,
+                "time": message.time,
+                "id": message.id
+            }
+            result = {"event": "receive_message", "data": message_socket}
             await websocket.send_json(result)
             if websocket_receiver is not None:
                 await websocket_receiver.send_json(result)

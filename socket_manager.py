@@ -46,7 +46,7 @@ class ConnectionManager:
                 message=receiver,
                 notify={"title": sender, "body": message},
             )
-            notify_dao.send(message_to_notify)
+            await notify_dao.send(message_to_notify)
             data["message"] = decrypt_message(data["message"])
             websocket_receiver = None
             for item in self.authorized_connections:
@@ -72,7 +72,7 @@ class ConnectionManager:
             else:
                 token_device = data["data"]["token_device"]
                 user_device = UserDevicePayload(username=user, token=token_device)
-                notify_dao.save_device_token(user_device)
+                await notify_dao.save_device_token(user_device)
                 if not user:
                     await websocket.send_json(
                         {"event": "auth", "status": 0, "data": "invalid token"}
